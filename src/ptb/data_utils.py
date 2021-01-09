@@ -21,9 +21,9 @@ def ptb_input_producer(raw_data, batch_size, num_steps, shuffle=False,
                     [batch_size, batch_len])
 
   epoch_size = (batch_len - 1) // num_steps
-  with tf.device("/cpu:0"):
+  with tf.device("/GPU:0"):
     epoch_size = tf.identity(epoch_size, name="epoch_size")
-    
+
     if randomize:
       i = tf.random_uniform([1], minval=0, maxval=batch_len - num_steps,
                             dtype=tf.int32)
@@ -43,4 +43,3 @@ def ptb_input_producer(raw_data, batch_size, num_steps, shuffle=False,
     y.set_shape([batch_size, num_steps])
 
   return x, y, num_batches_per_epoch
-

@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import cPickle as pickle
+import pickle
 import shutil
 import sys
 import time
@@ -271,7 +271,7 @@ def train():
             log_string += " mins={:<10.2f}".format(
                 float(curr_time - start_time) / 60)
             print(log_string)
-            
+
           if actual_step % ops["eval_every"] == 0:
             if (FLAGS.controller_training and
                 epoch % FLAGS.controller_train_every == 0):

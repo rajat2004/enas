@@ -85,6 +85,10 @@ class GeneralChild(Model):
     self.lr_min = lr_min
     self.lr_T_0 = lr_T_0
     self.lr_T_mul = lr_T_mul
+    self.lr_init = lr_init
+    self.lr_dec_start = lr_dec_start
+    self.lr_dec_every = lr_dec_every
+    self.lr_dec_rate = lr_dec_rate
     self.out_filters = out_filters * out_filters_scale
     self.num_layers = num_layers
 
@@ -142,13 +146,14 @@ class GeneralChild(Model):
     stride_spec = self._get_strides(stride)
     # Skip path 1
     path1 = tf.nn.avg_pool(
-        x, [1, 1, 1, 1], stride_spec, "VALID", data_format=self.data_format)
+        # x, [1, 1, 1, 1], stride_spec, "VALID", data_format=self.data_format)
+        x, [2, 2, 2, 2], stride_spec, "VALID", data_format=self.data_format)
     with tf.variable_scope("path1_conv"):
       inp_c = self._get_C(path1)
       w = create_weight("w", [1, 1, inp_c, out_filters // 2])
       path1 = tf.nn.conv2d(path1, w, [1, 1, 1, 1], "SAME",
                            data_format=self.data_format)
-  
+
     # Skip path 2
     # First pad with 0"s on the right and bottom, then shift the filter to
     # include those 0"s that were added.
@@ -160,15 +165,16 @@ class GeneralChild(Model):
       pad_arr = [[0, 0], [0, 0], [0, 1], [0, 1]]
       path2 = tf.pad(x, pad_arr)[:, :, 1:, 1:]
       concat_axis = 1
-  
+
     path2 = tf.nn.avg_pool(
-        path2, [1, 1, 1, 1], stride_spec, "VALID", data_format=self.data_format)
+        # path2, [1, 1, 1, 1], stride_spec, "VALID", data_format=self.data_format)
+        path2, [2, 2, 2, 2], stride_spec, "VALID", data_format=self.data_format)
     with tf.variable_scope("path2_conv"):
       inp_c = self._get_C(path2)
       w = create_weight("w", [1, 1, inp_c, out_filters // 2])
       path2 = tf.nn.conv2d(path2, w, [1, 1, 1, 1], "SAME",
                            data_format=self.data_format)
-  
+
     # Concat and apply BN
     final_path = tf.concat(values=[path1, path2], axis=concat_axis)
     final_path = batch_norm(final_path, is_training,
@@ -232,12 +238,13 @@ class GeneralChild(Model):
       if is_training:
         x = tf.nn.dropout(x, self.keep_prob)
       with tf.variable_scope("fc"):
-        if self.data_format == "NWHC":
-          inp_c = x.get_shape()[3].value
-        elif self.data_format == "NCHW":
-          inp_c = x.get_shape()[1].value
-        else:
-          raise ValueError("Unknown data_format {0}".format(self.data_format))
+        # if self.data_format == "NWHC":
+        #   inp_c = x.get_shape()[3].value
+        # elif self.data_format == "NCHW":
+        #   inp_c = x.get_shape()[1].value
+        # else:
+        #   raise ValueError("Unknown data_format {0}".format(self.data_format))
+        inp_c = x.get_shape()[1].value
         w = create_weight("w", [inp_c, 10])
         x = tf.matmul(x, w)
     return x
@@ -295,9 +302,14 @@ class GeneralChild(Model):
                     exclusive=True)
 
       if self.data_format == "NHWC":
-        out.set_shape([None, inp_h, inp_w, out_filters])
+        # out.set_shape([None, inp_h, inp_w, out_filters])
+        out_shape = [self.batch_size, inp_h, inp_w, out_filters]
       elif self.data_format == "NCHW":
-        out.set_shape([None, out_filters, inp_h, inp_w])
+        # out.set_shape([None, out_filters, inp_h, inp_w])
+        out_shape = [self.batch_size, out_filters, inp_h, inp_w]
+
+        out = tf.case(branches, default=lambda: tf.constant(0, tf.float32, shape=out_shape),
+                    exclusive=True)
     else:
       count = self.sample_arc[start_idx:start_idx + 2 * self.num_branches]
       branches = []
@@ -659,7 +671,7 @@ class GeneralChild(Model):
   def build_valid_rl(self, shuffle=False):
     print("-" * 80)
     print("Build valid graph on shuffled data")
-    with tf.device("/cpu:0"):
+    with tf.device("/GPU:0"):
       # shuffled valid data: for choosing validation model
       if not shuffle and self.data_format == "NCHW":
         self.images["valid_original"] = np.transpose(
@@ -705,4 +717,3 @@ class GeneralChild(Model):
     self._build_train()
     self._build_valid()
     self._build_test()
-

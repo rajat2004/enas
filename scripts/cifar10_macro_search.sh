@@ -38,4 +38,3 @@ python src/cifar10/main.py \
   --controller_skip_target=0.4 \
   --controller_skip_weight=0.8 \
   "$@"
-
