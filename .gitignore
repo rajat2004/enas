@@ -110,3 +110,6 @@ ENV/
 
 # VSCode
 .vscode/
+
+# WandB Logs
+wandb/

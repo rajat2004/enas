@@ -70,6 +70,8 @@ class Logger(object):
     self.log.write(message)
     self.log.flush()
 
+  def flush(self):
+    pass
 
 def count_model_params(tf_variables):
   """
@@ -150,7 +152,7 @@ def get_train_ops(
       grads = clipped
     else:
       raise NotImplementedError("Unknown clip_mode {}".format(clip_mode))
-  
+
   if lr_cosine:
     assert lr_max is not None, "Need lr_max to use lr_cosine"
     assert lr_min is not None, "Need lr_min to use lr_cosine"
@@ -241,4 +243,3 @@ def get_train_ops(
     return train_op, learning_rate, grad_norm, opt, grad_norms
   else:
     return train_op, learning_rate, grad_norm, opt
-

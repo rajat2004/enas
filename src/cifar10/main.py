@@ -11,6 +11,10 @@ import time
 import numpy as np
 import tensorflow as tf
 
+import wandb
+# from wandb.tensorflow import WandbHook
+# wandb.init(project="sysdl-project", sync_tensorboard=True)
+
 from src import utils
 from src.utils import Logger
 from src.utils import DEFINE_boolean
@@ -241,6 +245,7 @@ def train():
     config = tf.ConfigProto(allow_soft_placement=True)
     with tf.train.SingularMonitoredSession(
       config=config, hooks=hooks, checkpoint_dir=FLAGS.output_dir) as sess:
+        wandb.tensorflow.log(tf.summary.merge_all())
         start_time = time.time()
         while True:
           run_ops = [
@@ -290,6 +295,15 @@ def train():
                 ]
                 loss, entropy, lr, gn, val_acc, bl, skip, _ = sess.run(run_ops)
                 controller_step = sess.run(controller_ops["train_step"])
+
+                wandb.log({"Controller Step": controller_step })
+                wandb.log({"Loss": loss})
+                wandb.log({"Entropy": entropy})
+                wandb.log({"Grad Norm": gn})
+                wandb.log({"Validation Acc": val_acc})
+                wandb.log({"Baseline": bl})
+                wandb.log({"Skip rate": skip})
+                wandb.log({"Minutes": float(curr_time - start_time) / 60})
 
                 if ct_step % FLAGS.log_every == 0:
                   curr_time = time.time()
@@ -352,6 +366,9 @@ def main(_):
   sys.stdout = Logger(log_file)
 
   utils.print_user_flags()
+#   wandb.config(tf.app.flags.FLAGS)
+  wandb.init(project="sysdl-project", sync_tensorboard=True, config=tf.app.flags.FLAGS)
+
   train()
 
 
