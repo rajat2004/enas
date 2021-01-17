@@ -10,6 +10,18 @@ Authors: Hieu Pham*, Melody Y. Guan*, Barret Zoph, Quoc V. Le, Jeff Dean
 
 _This is not an official Google product._
 
+Fixed to be working with Python 3 alongwith some minimal WandB logging. CIFAR Micro Search tested to be working on TF 1.13.2
+
+System Specs used - 56 GB RAM, 16GB Tesla T4 GPU
+
+To run inside docker container (Requires Nvidia Docker 2) -
+
+```shell
+docker run --gpus all -it --name enas-tf --mount type=bind,source="$(pwd)",target=/workdir tensorflow/tensorflow:1.13.2-gpu-py3
+```
+
+cd to `workdir`, then run the scripts as required.
+
 ## Penn Treebank
 
 **IMPORTANT ERRATA**: The implementation of Language Model on this repository is wrong. Please do not use it. The correct implementation is at the [new repository](https://github.com/google-research/google-research/tree/master/enas_lm). We apologize for the inconvenience.

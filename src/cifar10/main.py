@@ -12,8 +12,6 @@ import numpy as np
 import tensorflow as tf
 
 import wandb
-# from wandb.tensorflow import WandbHook
-# wandb.init(project="sysdl-project", sync_tensorboard=True)
 
 from src import utils
 from src.utils import Logger
@@ -245,7 +243,6 @@ def train():
     config = tf.ConfigProto(allow_soft_placement=True)
     with tf.train.SingularMonitoredSession(
       config=config, hooks=hooks, checkpoint_dir=FLAGS.output_dir) as sess:
-        wandb.tensorflow.log(tf.summary.merge_all())
         start_time = time.time()
         while True:
           run_ops = [
@@ -367,7 +364,7 @@ def main(_):
 
   utils.print_user_flags()
 #   wandb.config(tf.app.flags.FLAGS)
-  wandb.init(project="sysdl-project", sync_tensorboard=True, config=tf.app.flags.FLAGS)
+  wandb.init(project="test", sync_tensorboard=True, config=tf.app.flags.FLAGS)
 
   train()
 
